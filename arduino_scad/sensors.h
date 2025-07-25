@@ -20,7 +20,7 @@
 // === Définition de la classe SensorModule ===
 class SensorModule {
     public:
-        SensorModule(); // Constructor
+        SensorModule(int clkPin, int csPin, int soPin); // Constructeur 
         ~SensorModule(); // Destructor
         void begin(); // Method to initialize the sensor
         void readAll(); // Method to read all sensors and update average temperature

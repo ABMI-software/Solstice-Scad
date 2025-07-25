@@ -7,47 +7,60 @@
  **************************************************************************/
 #include <Arduino.h>
 #include "config.h"
+#include "sensors.h"
 
 
-/**************************************************************************/
-/*!
-    @brief  Method to display sensor readings on the OLED screen
-    @param   ptc1 Temperature reading from PTC1 sensor
-    @param   ptc2 Temperature reading from PTC2 sensor
-    @param   cuve1 Temperature reading from CUVE1 sensor
-    @param   cuve2 Temperature reading from CUVE2 sensor
-    @param   heure Current time in HH:MM:SS format
-*/ 
-/**************************************************************************/
-/*!
-    @brief  Main setup function
-    Initializes the serial communication and OLED display
-*/
+//Create an instance of SensorModule
+SensorModule sensorPtc1(31, 28, 30);
+SensorModule sensorPtc2(37, 34, 35);
+SensorModule sensorCuve1(32, 33, 29);
+SensorModule sensorCuve2(27, 26, 25);
 void setup() {
     Serial.begin(9600);
+
+    // Initialize the  OLED display
     initOLED();
     splashABMI();
 
-    // Test d'affichage
-    afficherInfos(42.3, 41.7, 38.2, 37.8, "12:45:30", true);
+   delay(1000); // Wait for a second before starting the main loop
+    Serial.println("Setup complete. Starting main loop...");
 }
 
-/**************************************************************************/
-/*!
 
-    @brief  Main loop function
-    Continuously updates the OLED display with simulated sensor readings
-*/  
 void loop() {
     // Simule des données en boucle
-    float ptc1 = 42.3;
-    float ptc2 = 41.7;
-    float cuve1 = 38.2;
-    float cuve2 = 37.8;
-    String heure = "14:06:55";
-    bool mode_ete = true; // à switcher selon config
+    sensorPtc1.readAll(); // Read PTC1 sensor
+    sensorPtc2.readAll(); // Read PTC2 sensor
+    sensorCuve1.readAll(); // Read Cuve1 sensor
+    sensorCuve2.readAll(); // Read Cuve2 sensor
+    // Print the average temperatures to the Serial Monitor
 
-    afficherInfos(ptc1, ptc2, cuve1, cuve2, heure, mode_ete);
+    bool mode_ete = true;
+
+    float t1 = sensorPtc1.getSensor();
+    float t2 = sensorPtc2.getSensor();
+    float c1 = sensorCuve1.getSensor();
+    float c2 = sensorCuve2.getSensor();
+
+
+    Serial.print("PTC1 Average Temperature: ");
+    Serial.println(t1);
+    Serial.print("PTC2 Average Temperature: ");
+    Serial.println(t2);
+    Serial.print("Cuve1 Average Temperature: ");
+    Serial.println(c1);
+    Serial.print("Cuve2 Average Temperature: ");
+    Serial.println(c2);
+    delay(1000); // Wait for a second before the next reading
+
+    // Heure simulée pour test
+    String heure = "15:40:00";// Simulated time for testing
+
+    // Affichage OLED
+    afficherInfos(t1, t2, c1, c2, "15:40:00", mode_ete);
+
     delay(2000);
+
+    
 }
 

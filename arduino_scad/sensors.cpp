@@ -8,8 +8,8 @@
     Initializes the MAX6675 sensor with the pins defined in pins.h
 *//**************************************************************************/
 
-SensorModule::SensorModule() 
-    : sensor(PTC1_CLK, PTC1_CS, PTC1_SO), read_avg(0) {
+SensorModule::SensorModule(int clkPin, int csPin, int soPin)
+    : sensor(clkPin, csPin, soPin), read_avg(0) {
     // Initializing the readings array to zero
     for (int i = 0; i < NUM_READINGS; i++) {
         readings[i] = 0.0;
@@ -21,9 +21,7 @@ SensorModule::SensorModule()
     Cleans up resources if necessary
 *//**************************************************************************/  
 
-SensorModule::~SensorModule() {
-    // No specific cleanup needed for MAX6675, but can be added if necessary
-} 
+SensorModule::~SensorModule() {} 
 /**************************************************************************/
 /*!   
     @brief  Begin method for SensorModule

@@ -83,7 +83,7 @@ void afficherInfos(float ptc1, float ptc2, float cuve1, float cuve2, const Strin
     display.println("Températures:"); // Display the label for temperature readings0
     display.setCursor(0, 15);
     
-    display.print("PTC1 : "); display.print(ptc1, 1); display.println(" C"); // Display PTC1 temperature
+    display.print("PTC1 : "); display.print(ptc1, 1); display.println("°C"); // Display PTC1 temperature
     display.setCursor(0, 25);
 
     display.print("PTC2 : "); display.print(ptc2, 1); display.println(" C"); // Display PTC2 temperature
