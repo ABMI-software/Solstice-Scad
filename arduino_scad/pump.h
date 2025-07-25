@@ -1,3 +1,4 @@
+/*
 #ifndef PUMP_H
 #define PUMP_H
 
@@ -15,4 +16,4 @@ private:
     int _in1, _in2, _en;
 };
 
-#endif
+#endif*/

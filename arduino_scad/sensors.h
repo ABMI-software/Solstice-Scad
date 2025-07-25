@@ -1,34 +1,36 @@
-#ifdef SENSORS_H
-#define SENSORS_H
+// sensors.h
+/**************************************************************************/
+/*!
+    @file sensors.h
+    @brief Header file for the SensorModule class
+    Contains the definition of the SensorModule class which handles MAX6675 sensors
+*/
 
-#include <max6675.h>
-#include "pins.h"
-#include "config.h"
 
-Class SensorModule{
+/**************************************************************************/
+#include "pins.h" // Include pin definitions
+#include "config.h" // Include configuration settings
+/**************************************************************************/
+#include <Arduino.h> // Include Arduino core library
+/**************************************************************************/
+#include <max6675.h> // Include MAX6675 library for temperature sensor
+/**************************************************************************/
+
+
+// === Définition de la classe SensorModule ===
+class SensorModule {
     public:
-        SensorModule();
-        ~SensorModule();
-        void begin();
-        float readAll();
-        float getPTC1();
-        float getPTC2();
-        float getCUVE1();
-        float getCUVE2();
-        float readAverage();
+        SensorModule(); // Constructor
+        ~SensorModule(); // Destructor
+        void begin(); // Method to initialize the sensor
+        void readAll(); // Method to read all sensors and update average temperature
+        float getSensor(); // Method to get the current sensor reading
+        float readAverage(); // Method to get the average reading
 
     private:
-        MAX6675 ptc1;
-        MAX6675 ptc2;
-        MAX6675 cuve1;
-        MAX6675 cuve2;
-
-        float ptc1_avg;
-        float ptc2_avg;
-        float cuve1_avg;
-        float cuve2_avg;
-
-        float readings[4];
+        MAX6675 sensor; // Instance of the MAX6675 sensor
+        float read_avg; // Variable to store the average reading
+        float readings[NUM_READINGS]; // Array to store multiple readings for averaging
 };
+/**************************************************************************/
 
-#endif

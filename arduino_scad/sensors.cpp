@@ -1,24 +1,111 @@
-#include "Sensors.h"
 
-SensorModule::SensorModule()
-  : ptc1(PTC1_CLK, PTC1_CS, PTC1_SO),
-    ptc2(PTC2_CLK, PTC2_CS, PTC2_SO),
-    cuve1(CUVE1_CLK, CUVE1_CS, CUVE1_SO),
-    cuve2(CUVE2_CLK, CUVE2_CS, CUVE2_SO),
-    ptc1_avg(0), ptc2_avg(0), cuve1_avg(0), cuve2_avg(0) {}
+#include "config.h" // Include configuration settings
+#include <max6675.h> // Include MAX6675 library for temperature sensor
+#include "sensors.h"
+/**************************************************************************/
+/*!
+    @brief  Constructor for SensorModule
+    Initializes the MAX6675 sensor with the pins defined in pins.h
+*//**************************************************************************/
+
+SensorModule::SensorModule() 
+    : sensor(PTC1_CLK, PTC1_CS, PTC1_SO), read_avg(0) {
+    // Initializing the readings array to zero
+    for (int i = 0; i < NUM_READINGS; i++) {
+        readings[i] = 0.0;
+    }
+}
+/**************************************************************************/
+/*!       
+    @brief  Destructor for SensorModule
+    Cleans up resources if necessary
+*//**************************************************************************/  
+
+SensorModule::~SensorModule() {
+    // No specific cleanup needed for MAX6675, but can be added if necessary
+} 
+/**************************************************************************/
+/*!   
+    @brief  Begin method for SensorModule
+    Initializes the sensor, if needed
+*//**************************************************************************/          
+
+void SensorModule::begin() {
+    // No specific setup needed for MAX6675, but can be added if necessary
+}   
+
+/**************************************************************************/
+/*!
+    @brief  Reads all sensors and updates the average temperature
+    This method reads the temperature from the MAX6675 sensor and updates the average
+*//**************************************************************************/      
+
+
+void SensorModule::readAll() {
+    // Read the temperature from the MAX6675 sensor
+    float temp = sensor.readCelsius();
+    
+    // Shift readings to make room for the new reading
+    for (int i = NUM_READINGS - 1; i > 0; i--) {
+        readings[i] = readings[i - 1];
+    }
+    
+    // Store the new reading
+    readings[0] = temp;
+
+    // Calculate the average temperature
+    read_avg = 0.0;
+    for (int i = 0; i < NUM_READINGS; i++) {
+        read_avg += readings[i];
+    }
+    read_avg /= NUM_READINGS;
+}
+
+/**************************************************************************/
+/*!             
+    @brief  Returns the average temperature reading
+    @returns The average temperature from the readings
+*//**************************************************************************/
+float SensorModule::getSensor() {
+    return read_avg;
+}
+/**************************************************************************/
+/*!           
+    @brief  Reads the average temperature from the sensor
+    This method is kept for compatibility, but it now uses getSensor()
+    @returns The average temperature reading
+*//**************************************************************************/    
+float SensorModule::readAverage() {
+    // Calculate the average of the readings
+    float sum = 0.0;
+    for (int i = 0; i < NUM_READINGS; i++) {
+        sum += readings[i];
+    }
+    return sum / NUM_READINGS;
+}
+/**************************************************************************/
+/*!
+    @brief  Constructor for SensorModule with specific MAX6675 pins
+    Initializes the MAX6675 sensor with the specified SCK, CS, and SO pins
+*//**************************************************************************/
+
+/*// Définition des capteurs MAX6675
+SensorModule::SensorModule(MAX6675 ptc1):    
+  SensorModule::SensorModule(int sck, int cs, int so) // Initialisation du d'un capteur avec les broches définies dans pins.h
+    : ptc1(sck, cs, so), read_avg(0) {}
+
+   
+
+SensorModule::~SensorModule(){} 
 
 void SensorModule::begin() {
   // Pas besoin de setup pour MAX6675, mais tu peux initialiser ici si besoin
 }
 
 void SensorModule::readAll() {
-  ptc1_avg   = ptc1.readCelsius();
-  ptc2_avg   = ptc2.readCelsius();
-  cuve1_avg  = cuve1.readCelsius();
-  cuve2_avg  = cuve2.readCelsius();
+  read_avg   = ptc1.readCelsius(); 
+
 }
 
-float SensorModule::getPTC1()   { return ptc1_avg; }
-float SensorModule::getPTC2()   { return ptc2_avg; }
-float SensorModule::getCUVE1()  { return cuve1_avg; }
-float SensorModule::getCUVE2()  { return cuve2_avg; }
+float SensorModule::getSensor()   { return read_avg; }
+*/
