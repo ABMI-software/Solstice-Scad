@@ -1,4 +1,4 @@
-# ☀️ Solstice – Smart Climate and Autonomous Distribution
+# ☀️ Solstice - SCAD – Smart Climate and Autonomous Distribution
 
 **Solstice** est un système embarqué intelligent de gestion climatique (SCAD) capable de surveiller la température, de calculer la position du soleil à partir d’un module GPS, et d’activer des modules de pompe ou de ventilation en fonction de données environnementales. Il est conçu pour fonctionner de manière autonome ou connectée, avec un enregistrement local (SD Card) ou distant (serveur + dashboard).
 
