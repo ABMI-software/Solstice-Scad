@@ -67,39 +67,27 @@ void splashABMI() {
 */
 /**************************************************************************/
 
-void afficherInfos(float ptc1, float ptc2, float cuve1, float cuve2, const String& heure, bool mode_ete) {
+void afficherInfos(float t1, float t2, float c1, float c2, GPSModule& gpsModule) {
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
 
-    display.setCursor(0, 0);// Set cursor to the top-left corner
+    display.setCursor(0, 0);
     display.println("Informations:");
     display.setCursor(0, 10);
-    display.print("Mode ");
-    display.print("Heure ");
-    display.print(mode_ete ? "(ETE): " : "(HIVER): ");
-    display.println(heure);
-    display.setCursor(0, 20); // Display sensor readings
-    display.println("Températures:"); // Display the label for temperature readings0
-    display.setCursor(0, 15);
-    
-    display.print("PTC1 : "); display.print(ptc1, 1); display.println("°C"); // Display PTC1 temperature
-    display.setCursor(0, 25);
-
-    display.print("PTC2 : "); display.print(ptc2, 1); display.println(" C"); // Display PTC2 temperature
-    display.setCursor(0, 35);
-
-    display.print("Cuve1: "); display.print(cuve1, 1); display.println(" C"); // Display CUVE1 temperature
-    display.setCursor(0, 45);
-
-    display.print("Cuve2: "); display.print(cuve2, 1); display.println(" C");// Display CUVE2 temperature
-    display.setCursor(0, 55);
-    display.println("ABMI SCAD Project"); // Display project name
-    display.setCursor(0, 65);
-    display.println("Version 1.0"); // Display version information
-    display.setCursor(0, 75);
-    display.println("2025"); // Display year
-    display.setCursor(0, 85);
-   
+    display.println("Date: " + gpsModule.getDate());
+    display.setCursor(0, 20);
+    display.println("Time: " + gpsModule.getTime());
+    display.setCursor(0, 30);
+    display.println("Températures:");
+    display.setCursor(0, 40);
+    display.print("PTC1 : "); display.print(t1, 1); display.println("°C");
+    display.setCursor(0, 50);
+    display.print("PTC2 : "); display.print(t2, 1); display.println("°C");
+    display.setCursor(0, 60);
+    display.print("Cuve1: "); display.print(c1, 1); display.println("°C");
+    display.setCursor(0, 70);
+    display.print("Cuve2: "); display.print(c2, 1); display.println("°C");
     display.display();
 }
+/**************************************************************************/

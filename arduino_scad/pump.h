@@ -1,19 +1,18 @@
-/*
-#ifndef PUMP_H
-#define PUMP_H
+#pragma once 
 
-#include <Arduino.h>
-
-class Pump {
+class PumpController {
 public:
-    Pump(int pin_in1, int pin_in2, int pin_en); // pin du L298N
-    void begin();
-    void start();
-    void stop();
-    void setSpeed(int pwm);
+  void begin();
+
+  void setA(int pct);   // 0..100
+  void setB(int pct);   // 0..100
+  int  getA() const { return a_pct; }
+  int  getB() const { return b_pct; }
+
+  void stopAll();
 
 private:
-    int _in1, _in2, _en;
+  int a_pct = 0, b_pct = 0;
+  void applyA();
+  void applyB();
 };
-
-#endif*/

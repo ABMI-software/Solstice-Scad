@@ -1,10 +1,27 @@
 #include "GPS.h"
+#include "config.h"
+#include <SoftwareSerial.h>
+#include <TinyGPS++.h>
+#include "pins.h"
+
+/**************************************************************************/
+/*!
+    @file GPS.cpp
+    @brief Implementation of GPS module functions
+*//**************************************************************************/
+
+// GPSModule class constructor
 
 GPSModule::GPSModule() : gpsSerial(GPS_RX, GPS_TX) {}
 
 void GPSModule::begin() {
   gpsSerial.begin(9600);
 }
+
+/**************************************************************************/
+// Function to update GPS data
+// Returns true if the data is valid, false otherwise
+/**************************************************************************/
 
 bool GPSModule::update() {
   while (gpsSerial.available()) {

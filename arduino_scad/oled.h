@@ -17,7 +17,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
-
+#include "GPS.h" // Include GPS module header
 // === Initialisation de l’écran global ===
 extern Adafruit_SSD1306 display;
 
@@ -25,6 +25,7 @@ void initOLED();
 void afficherTemp(float ptc1, float ptc2, float cuve1, float cuve2, const String& heure);
 
 void splashABMI();
-void afficherInfos(float ptc1, float ptc2, float cuve1, float  cuve2, const String& heure, bool mode_ete);
+void afficherInfos(float t1, float t2, float c1, float c2, GPSModule& gpsModule);
 
+/**************************************************************************/
 #endif

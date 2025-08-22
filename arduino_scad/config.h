@@ -9,14 +9,22 @@
 
 /**************************************************************************/
 // === LIBRAIRIES ===
-#include <Arduino.h>
+
+// Libraries for OLED display
+#include <Adafruit_SSD1306.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+// Libraries for pumps 
 #include <SPI.h>
 #include <TimeLib.h>
 #include <math.h>
+// Libraries for sensors and modules
+
 #include <max6675.h>
+// Libraries for GPS module
+#include <SoftwareSerial.h>
+#include <TinyGPS++.h>
+
 
 /**************************************************************************/
 
