@@ -37,6 +37,7 @@
 // === DÉFINITION DE LA COMMUNICATION SÉRIE ===
 #include "serial_comm.h"
 
+
 // === DÉFINITION DES CONSTANTES ===
 const int NUM_SENSORS = 4; // Nombre total de capteurs
 const int NUM_PUMPS = 2; // Nombre total de pompes

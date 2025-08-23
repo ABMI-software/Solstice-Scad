@@ -20,13 +20,13 @@
 // === Définition des broches pour les Encodeurs ===
 // Encodeur 1
 #define ENCODER1_CLK 2
-#define ENCODER1_DT 3
-#define ENCODER1_SW 4
+#define ENCODER1_DT 5
+#define ENCODER1_SW 7
 
 // Encodeur 2
-#define ENCODER2_CLK 5
-#define ENCODER2_DT 6
-#define ENCODER2_SW 7
+#define ENCODER2_CLK 3
+#define ENCODER2_DT 19
+#define ENCODER2_SW 4
 
 /**************************************************************************/
 // === Définition des broches pour les sondes MAX6675 ===
@@ -71,7 +71,7 @@
 /**************************************************************************/
 //  === Définition des broches pour le panneau PV
 
-#define PV_VOUT A0
+#define PV_VOUT A1
 
 /**************************************************************************/
 
