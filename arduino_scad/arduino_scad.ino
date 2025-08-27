@@ -220,7 +220,7 @@ void gererCommandesSerial() {
 */
 /**************************************************************************/
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     Serial.println("=== DÉMARRAGE SYSTÈME SCAD ===");
     
     // Initialisation capteurs
@@ -238,15 +238,12 @@ void setup() {
     
     // Initialisation RTC
     Serial.println("Init RTC...");
-    if (rtc.begin()) {
-        Serial.println("RTC OK");
-        if (rtc.lostPower()) {
-            Serial.println("RTC sync nécessaire");
-            rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); // Décommentez si besoin
-        }
-    } else {
-        Serial.println("RTC non détecté");
+    if (!rtc.begin()) {
+        Serial.println("RTC introuvable !");
+        while (1);  // Stoppe le programme si le module n’est pas détecté
     }
+        // Lancer une mise à l’heure :
+         rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));  // Réglage à l’heure de compilation
     
     // Initialisation OLED
     Serial.println("Init OLED...");
