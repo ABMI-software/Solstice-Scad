@@ -1,194 +1,316 @@
-
 /**************************************************************************
  * @file arduino_scad.ino
- * @brief Main file for the Arduino SCAD project
- * This file initializes the OLED display and simulates sensor readings.
- * It is part of the Arduino SCAD project and is used to test the OLED display functionality.
+ * @brief Programme principal Arduino SCAD - Version simplifiée
+ * Fonctionnalités : capteurs MAX6675, encodeurs, pompes, UART, RTC, OLED
  **************************************************************************/
 
 #include <Arduino.h>
 #include "config.h"
 #include "sensors.h"
-#include "GPS.h"
 #include "pump.h"
 #include "pins.h"
+#include "oled.h"
+#include <RTClib.h>
 
-#include "pump.h"
-#include <Arduino.h>
-#include "pins.h"
+// === DÉFINITION DES VARIABLES GLOBALES ===
+unsigned long dernier_affichage_serial = 0;
+unsigned long dernier_affichage_oled = 0;
+unsigned long dernier_controle_pompes = 0;
+unsigned long dernier_envoi_uart = 0;
 
+// === INSTANCES DES MODULES ===
+SensorModule sensorEau(PTC1_CLK, PTC1_CS, PTC1_SO);
+SensorModule sensorPanneau(PTC2_CLK, PTC2_CS, PTC2_SO);
+SensorModule sensorCuve1(CUVE1_CLK, CUVE1_CS, CUVE1_SO);
+SensorModule sensorCuve2(CUVE2_CLK, CUVE2_CS, CUVE2_SO);
 
+PumpController pompes;
+EncoderController enc1(ENCODER1_CLK, ENCODER1_DT);
+EncoderController enc2(ENCODER2_CLK, ENCODER2_DT);
 
-/*
-// __________________________________________________________________________________________________
-//test des pompes et des encodeurs
-// Converts percentage (0-100) to PWM value (0-255)
-static inline uint8_t pct2pwm(int pct) {
-  pct = constrain(pct, 0, 100);
-  return map(pct, 0, 100, 0, 255);
+RTC_DS3231 rtc;
+
+/**************************************************************************/
+/*!
+    @brief  Fonction timestamp avec RTC
+*/
+/**************************************************************************/
+String getTimestamp() {
+    DateTime now = rtc.now();
+    char buffer[20];
+    sprintf(buffer, "%04d-%02d-%02d %02d:%02d:%02d",
+            now.year(), now.month(), now.day(),
+            now.hour(), now.minute(), now.second());
+    return String(buffer);
 }
 
-void PumpController::begin() {
-    // Initialize pump control pins
-    pinMode(POMPE1_IN1, OUTPUT); 
-    pinMode(POMPE1_IN2, OUTPUT); 
-    pinMode(POMPE1_ENA, OUTPUT); 
-    pinMode(POMPE2_IN3, OUTPUT); 
-    pinMode(POMPE2_IN4, OUTPUT); 
-    pinMode(POMPE2_ENB, OUTPUT);
+/**************************************************************************/
+/*!
+    @brief  Lecture tension PV simplifiée
+*/
+/**************************************************************************/
+float readPVVoltage() {
+    int adc = analogRead(PV_VOUT);
+    return (adc * 5.0) / 1023.0;
+}
+
+/**************************************************************************/
+/*!
+    @brief  Envoi frame UART vers Raspberry Pi
+*/
+/**************************************************************************/
+void sendFrameUART() {
+    String timestamp = getTimestamp();
+    float t_eau = sensorEau.getSensor();
+    float t_panneau = sensorPanneau.getSensor();
+    float t_cuve1 = sensorCuve1.getSensor();
+    float t_cuve2 = sensorCuve2.getSensor();
+    int encoder1 = enc1.getValue();
+    int encoder2 = enc2.getValue();
+    float pv_volts = readPVVoltage();
     
-    // Set initial states - all LOW initially
-    digitalWrite(POMPE1_ENA, LOW); 
-    digitalWrite(POMPE2_ENB, LOW);
-    digitalWrite(POMPE1_IN1, LOW); 
-    digitalWrite(POMPE1_IN2, LOW);
-    digitalWrite(POMPE2_IN3, LOW); 
-    digitalWrite(POMPE2_IN4, LOW);
+    // Format CSV pour Raspberry Pi
+    Serial.print("DATA,");
+    Serial.print(timestamp); Serial.print(",");
+    Serial.print(t_eau, 2); Serial.print(",");
+    Serial.print(t_panneau, 2); Serial.print(",");
+    Serial.print(t_cuve1, 2); Serial.print(",");
+    Serial.print(t_cuve2, 2); Serial.print(",");
+    Serial.print(encoder1); Serial.print(",");
+    Serial.print(encoder2); Serial.print(",");
+    Serial.print(pv_volts, 3);
+    Serial.println();
+}
+
+/**************************************************************************/
+/*!
+    @brief  Affiche les données sur le moniteur série
+*/
+/**************************************************************************/
+void afficherDonneesCompletes() {
+    Serial.println("=== SYSTÈME SCAD - DONNÉES ===");
+    Serial.print("Horodatage: "); Serial.println(getTimestamp());
     
-    // Set direction for both pumps (adjust if reversed)
-    digitalWrite(POMPE1_IN1, HIGH); 
-    digitalWrite(POMPE1_IN2, LOW);
-    digitalWrite(POMPE2_IN3, LOW);  
-    digitalWrite(POMPE2_IN4, HIGH);
-
-    // Initialize pumps to 0%
-    setA(0); 
-    setB(0);
-}
-
-void PumpController::applyA() { 
-    analogWrite(POMPE1_ENA, pct2pwm(a_pct)); 
-}
-
-void PumpController::applyB() { 
-    analogWrite(POMPE2_ENB, pct2pwm(b_pct)); 
-}
-
-void PumpController::setA(int pct) { 
-    a_pct = constrain(pct, 0, 100); 
-    applyA(); 
-}
-
-void PumpController::setB(int pct) { 
-    b_pct = constrain(pct, 0, 100); 
-    applyB(); 
-}
-
-void PumpController::stopAll() { 
-    a_pct = 0; 
-    b_pct = 0; 
-    applyA(); 
-    applyB(); 
-}
-
-// ========== ENCODERCONTROLLER IMPLEMENTATION ==========
-
-EncoderController::EncoderController(int clk, int dt) 
-    : clkPin(clk), dtPin(dt), compteur(0), lastClkState(LOW) {
-}
-
-void EncoderController::begin() {
-    pinMode(clkPin, INPUT);
-    pinMode(dtPin, INPUT);
+    Serial.println("--- Températures ---");
+    Serial.print("Eau: "); Serial.print(sensorEau.getSensor(), 2); Serial.println(" °C");
+    Serial.print("Panneau: "); Serial.print(sensorPanneau.getSensor(), 2); Serial.println(" °C");
+    Serial.print("Cuve1: "); Serial.print(sensorCuve1.getSensor(), 2); Serial.println(" °C");
+    Serial.print("Cuve2: "); Serial.print(sensorCuve2.getSensor(), 2); Serial.println(" °C");
     
-    lastClkState = digitalRead(clkPin);
+    Serial.println("--- Encodeurs ---");
+    Serial.print("Enc1: "); Serial.println(enc1.getValue());
+    Serial.print("Enc2: "); Serial.println(enc2.getValue());
+    
+    Serial.println("--- PV ---");
+    Serial.print("Tension: "); Serial.print(readPVVoltage(), 2); Serial.println(" V");
+    
+    Serial.println("--- Pompes ---");
+    Serial.print("Pompe A: "); Serial.print(pompes.getA()); Serial.println(" %");
+    Serial.print("Pompe B: "); Serial.print(pompes.getB()); Serial.println(" %");
+    
+    Serial.println("===============================");
 }
 
-void EncoderController::update() {
-    // Lecture de l'encodeur rotatif
-    int currentClk = digitalRead(clkPin);
+/**************************************************************************/
+/*!
+    @brief  Affichage OLED
+*/
+/**************************************************************************/
+void afficherOLED() {
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
     
-    if (currentClk != lastClkState) {
-        if (digitalRead(dtPin) != currentClk) {
-            compteur++;  // Rotation horaire
-        } else {
-            compteur--;  // Rotation anti-horaire
+    // Titre avec timestamp
+    display.setCursor(0, 0);
+    display.print("SCAD ");
+    String time = getTimestamp();
+    if (time.length() > 15) time = time.substring(time.length() - 8);
+    display.println(time);
+    
+    display.drawLine(0, 9, 127, 9, SSD1306_WHITE);
+    
+    // Températures
+    display.setCursor(0, 12);
+    display.print("Eau:");
+    display.print(sensorEau.getSensor(), 1);
+    display.print(" Pan:");
+    display.print(sensorPanneau.getSensor(), 1);
+    
+    display.setCursor(0, 21);
+    display.print("C1:");
+    display.print(sensorCuve1.getSensor(), 1);
+    display.print(" C2:");
+    display.print(sensorCuve2.getSensor(), 1);
+    
+    // Encodeurs
+    display.setCursor(0, 30);
+    display.print("Enc1:");
+    display.print(enc1.getValue());
+    display.print(" Enc2:");
+    display.print(enc2.getValue());
+    
+    // PV
+    display.setCursor(0, 39);
+    display.print("PV:");
+    display.print(readPVVoltage(), 1);
+    display.print("V");
+    
+    // Pompes
+    display.setCursor(0, 48);
+    display.print("PompeA:");
+    display.print(pompes.getA());
+    display.print("% B:");
+    display.print(pompes.getB());
+    display.print("%");
+    
+    display.display();
+}
+
+/**************************************************************************/
+/*!
+    @brief  Contrôle des pompes via encodeurs
+*/
+/**************************************************************************/
+
+/**************************************************************************/
+/*!
+    @brief  Gestion des commandes série simples
+*/
+/**************************************************************************/
+void gererCommandesSerial() {
+    if (Serial.available()) {
+        String commande = Serial.readStringUntil('\n');
+        commande.trim();
+        commande.toUpperCase();
+        
+        if (commande == "STATUS") {
+            afficherDonneesCompletes();
         }
-        
-        // Limiter entre 0 et 100 (pourcentage PWM)
-        compteur = constrain(compteur, 0, 100);
-        
-        // Optional: Serial debugging
-        Serial.print("Encodeur: ");
-        Serial.println(compteur);
+        else if (commande == "ENCODEURS") {
+            Serial.print("Enc1: "); Serial.print(enc1.getValue());
+            Serial.print(" / Enc2: "); Serial.println(enc2.getValue());
+        }
+        else if (commande == "POMPES") {
+            Serial.print("PompeA: "); Serial.print(pompes.getA());
+            Serial.print("% / PompeB: "); Serial.print(pompes.getB()); Serial.println("%");
+        }
+        else if (commande == "STOP") {
+            pompes.stopAll();
+            Serial.println("Pompes arrêtées");
+        }
+        else if (commande == "UART") {
+            sendFrameUART();
+        }
+        else if (commande == "HELP") {
+            Serial.println("=== COMMANDES ===");
+            Serial.println("STATUS - État système");
+            Serial.println("ENCODEURS - État encodeurs");
+            Serial.println("POMPES - État pompes");
+            Serial.println("STOP - Arrêt pompes");
+            Serial.println("UART - Envoi UART manuel");
+            Serial.println("HELP - Cette aide");
+        }
     }
-    lastClkState = currentClk;
 }
 
-void EncoderController::setValue(int value) {
-    compteur = constrain(value, 0, 100);
-}
-
-//________________________________________________________________________________  
-//test des capteurs et de l'afficheur OLED
-/*
-//Create an instance of SensorModule
-SensorModule sensorPtc1(31, 28, 30);
-SensorModule sensorPtc2(37, 34, 35);
-SensorModule sensorCuve1(32, 33, 29);
-SensorModule sensorCuve2(27, 26, 25);
-
-// Create an instance of GPSModule
-GPSModule gpsModule;
+/**************************************************************************/
+/*!
+    @brief  Setup - Initialisation
+*/
+/**************************************************************************/
 void setup() {
     Serial.begin(9600);
-
-    // Initialize the GPS module
-    gpsModule.begin();
-    // Initialize the  OLED display
+    Serial.println("=== DÉMARRAGE SYSTÈME SCAD ===");
+    
+    // Initialisation capteurs
+    Serial.println("Init capteurs...");
+    sensorEau.begin();
+    sensorPanneau.begin();
+    sensorCuve1.begin();
+    sensorCuve2.begin();
+    
+    // Initialisation encodeurs et pompes
+    Serial.println("Init encodeurs et pompes...");
+    enc1.begin();
+    enc2.begin();
+    pompes.begin();
+    
+    // Initialisation RTC
+    Serial.println("Init RTC...");
+    if (rtc.begin()) {
+        Serial.println("RTC OK");
+        if (rtc.lostPower()) {
+            Serial.println("RTC sync nécessaire");
+            rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); // Décommentez si besoin
+        }
+    } else {
+        Serial.println("RTC non détecté");
+    }
+    
+    // Initialisation OLED
+    Serial.println("Init OLED...");
     initOLED();
     splashABMI();
-
-   delay(1000); // Wait for a second before starting the main loop
-    Serial.println("Setup complete. Starting main loop...");
+    
+    delay(2000);
+    Serial.println("=== SYSTÈME PRÊT ===");
+    Serial.println("Tapez HELP pour les commandes");
 }
 
-
+/**************************************************************************/
+/*!
+    @brief  Loop principal
+*/
+/**************************************************************************/
 void loop() {
+    // MISE À JOUR ENCODEURS (PRIORITÉ!)
+    enc1.update();
+    enc2.update();
+    
+    int vitesseA = enc1.getValue();
+    int vitesseB = enc2.getValue();
+    
+    pompes.setA(vitesseA);
+    pompes.setB(vitesseB);
+    
+    // Lecture capteurs
+    sensorEau.readAll();
+    sensorPanneau.readAll();
+    sensorCuve1.readAll();
+    sensorCuve2.readAll();
 
-    // Read GPS data
-    // Check if GPS data is valid 
-    if (gpsModule.update()) { // Remplace 'update' par le nom correct de ta méthode
-    Serial.println("Date: " + gpsModule.getDate());
-    Serial.println("Time: " + gpsModule.getTime());
-    } else {
-        Serial.println("GPS data not valid");
+ 
+    
+    // Envoi UART périodique
+    if (millis() - dernier_envoi_uart >= INTERVALLE_UART) {
+        sendFrameUART();
+        dernier_envoi_uart = millis();
     }
-    delay(1000); 
-
-    // Simule des données en boucle
-    sensorPtc1.readAll(); // Read PTC1 sensor
-    sensorPtc2.readAll(); // Read PTC2 sensor
-    sensorCuve1.readAll(); // Read Cuve1 sensor
-    sensorCuve2.readAll(); // Read Cuve2 sensor
-    // Print the average temperatures to the Serial Monitor
-
-    bool mode_ete = true;
-
-    float t1 = sensorPtc1.getSensor();
-    float t2 = sensorPtc2.getSensor();
-    float c1 = sensorCuve1.getSensor();
-    float c2 = sensorCuve2.getSensor();
     
-
-    Serial.print("PTC1 Average Temperature: ");
-    Serial.println(t1);
-    Serial.print("PTC2 Average Temperature: ");
-    Serial.println(t2);
-    Serial.print("Cuve1 Average Temperature: ");
-    Serial.println(c1);
-    Serial.print("Cuve2 Average Temperature: ");
-    Serial.println(c2);
-    delay(1000); // Wait for a second before the next reading
-
-    // Heure simulée pour test
-    String heure = "15:40:00";// Simulated time for testing
-
-    // Affichage OLED
-    afficherInfos(t1, t2, c1, c2, gpsModule);
-
-    delay(2000);
-
+    // Gestion commandes série
+    gererCommandesSerial();
     
-}*/
+    // Affichage date et heure 
+    getTimestamp() ;
 
+    // Affichage série périodique
+    if (millis() - dernier_affichage_serial >= INTERVALLE_SERIAL) {
+        afficherDonneesCompletes();
+        dernier_affichage_serial = millis();
+    }
+    
+    // Mise à jour OLED
+    if (millis() - dernier_affichage_oled >= INTERVALLE_OLED) {
+        afficherOLED();
+        dernier_affichage_oled = millis();
+    }
+    
+    // Contrôle pompes
+    /*if (millis() - dernier_controle_pompes >= INTERVALLE_POMPES) {
+        controlerPompes();
+        dernier_controle_pompes = millis();
+    }
+    */
+    delay(5); // Délai court pour réactivité encodeurs
+}
