@@ -3,20 +3,12 @@
     @brief Pin definitions for the Arduino SCAD project
     Contains pin assignments for sensors, pumps, encoders, and OLED display
 */
-
-/**************************************************************************/
-// pins.h
-// This file contains the pin definitions for the Arduino SCAD project.
-// It includes definitions for sensors, pumps, encoders, and the OLED display.
-// It is included in the config.h file to centralize all pin assignments.
-// This file is part of the Arduino SCAD project and is used to configure the hardware setup.
-// It is included in the config.h file to centralize all pin assignments.
 /**************************************************************************/
 
 #ifndef PINS_H
 #define PINS_H  
-/**************************************************************************/
 
+/**************************************************************************/
 // === Définition des broches pour les Encodeurs ===
 // Encodeur 1
 #define ENCODER1_CLK 2
@@ -25,7 +17,7 @@
 
 // Encodeur 2
 #define ENCODER2_CLK 3
-#define ENCODER2_DT 19
+#define ENCODER2_DT 19  // Changé pour éviter conflit avec GPS_TX
 #define ENCODER2_SW 4
 
 /**************************************************************************/
@@ -55,31 +47,23 @@
 
 /**************************************************************************/
 // === Définition des broches pour les pompes ===
-// Les pompes sont contrôlées par des ponts en H, donc 2 broches par pompe
-// Les broches IN1 et IN2 sont pour la pompe 1, IN3 et IN4 pour la pompe 2
-// Les broches ENA et ENB sont pour le contrôle de la vitesse des pompes
 // Pompe 1
 #define POMPE1_IN1 22
 #define POMPE1_IN2 23
-#define POMPE1_ENA 26
+#define POMPE1_ENA 8  // Changé de 26 à 8 (conflit résolu)
 
 // Pompe 2
 #define POMPE2_IN3 24
 #define POMPE2_IN4 25
-#define POMPE2_ENB 27
+#define POMPE2_ENB 9  // Changé de 27 à 9 (conflit résolu)
 
 /**************************************************************************/
-//  === Définition des broches pour le panneau PV
-
+// === Définition des broches pour le panneau PV ===
 #define PV_VOUT A1
 
 /**************************************************************************/
-
 // === Définition des broches pour le module GPS ===
-#define GPS_RX 16  // Pin RX du GPS 
-#define GPS_TX 17  // Pin TX du GPS 
-
-
+#define GPS_RX 14  // Pin RX du GPS 
+#define GPS_TX 15  // Pin TX du GPS 
 
 #endif // PINS_H
-

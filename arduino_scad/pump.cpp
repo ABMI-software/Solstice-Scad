@@ -65,8 +65,7 @@ void PumpController::stopAll() {
 
 // ========== ENCODERCONTROLLER IMPLEMENTATION ==========
 
-EncoderController::EncoderController(int clk, int dt) 
-    : clkPin(clk), dtPin(dt), compteur(0), lastClkState(LOW) {
+EncoderController::EncoderController(int clk, int dt) : clkPin(clk), dtPin(dt), compteur(0), lastClkState(LOW) {
 }
 
 void EncoderController::begin() {
